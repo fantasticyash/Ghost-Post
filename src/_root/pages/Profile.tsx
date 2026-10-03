@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import LikedPosts from "./LikedPosts";
 import { useUserContext } from "@/context/AuthContext";
-import { useGetUserById } from "@/lib/react-query/queries";
+import { useGetUserById, useFollowUser } from "@/lib/react-query/queries";
 import GridPostList from "@/components/shared/GridPostList";
 import Loader from "@/components/shared/Loader";
 
@@ -31,6 +31,7 @@ const Profile = () => {
   const { pathname } = useLocation();
 
   const { data: currentUser } = useGetUserById(id || "");
+  const { mutate: followUser, isPending: isFollowingPending } = useFollowUser();
 
   if (!currentUser)
     return (
@@ -40,6 +41,12 @@ const Profile = () => {
     );
 
   const isCurrentUser = user.id === currentUser.$id;
+  const isFollowing = currentUser.followers?.includes(user.id);
+
+  const handleFollow = () => {
+    if (!currentUser || isCurrentUser) return;
+    followUser({ currentUserId: user.id, targetUserId: currentUser.$id });
+  };
 
   return (
     <div className="profile-container">
@@ -64,8 +71,8 @@ const Profile = () => {
 
             <div className="flex gap-8 mt-6 items-center justify-center xl:justify-start flex-wrap z-20">
               <StatBlock value={currentUser.posts?.length || 0} label="Posts" />
-              <StatBlock value={20} label="Followers" />
-              <StatBlock value={20} label="Following" />
+              <StatBlock value={currentUser.followers?.length || 0} label="Followers" />
+              <StatBlock value={currentUser.following?.length || 0} label="Following" />
             </div>
 
             <p className="small-medium md:base-medium text-center xl:text-left mt-6 max-w-screen-sm">
@@ -91,8 +98,17 @@ const Profile = () => {
               </Link>
             </div>
             <div className={`${isCurrentUser && "hidden"}`}>
-              <Button type="button" className="shad-button_primary px-8">
-                Follow
+              <Button
+                type="button"
+                className={`${
+                  isFollowing
+                    ? "bg-dark-4 hover:bg-dark-3 text-light-1"
+                    : "shad-button_primary"
+                } px-8`}
+                onClick={handleFollow}
+                disabled={isFollowingPending}
+              >
+                {isFollowing ? "Unfollow" : "Follow"}
               </Button>
             </div>
           </div>

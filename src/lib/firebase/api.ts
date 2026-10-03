@@ -21,6 +21,8 @@ import {
   limit,
   startAfter,
   DocumentSnapshot,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 import {
   ref,
@@ -127,6 +129,8 @@ export async function saveUserToDB(user: {
           ? user.imageUrl
           : user.imageUrl.toString(),
       bio: "",
+      followers: [],
+      following: [],
       $createdAt: new Date().toISOString(),
     };
 
@@ -253,10 +257,19 @@ export async function getCurrentUser(): Promise<Models.Document | null> {
       console.warn("Could not fetch user posts:", e);
     }
 
+    const followers = Array.isArray(userData.followers)
+      ? userData.followers
+      : [];
+    const following = Array.isArray(userData.following)
+      ? userData.following
+      : [];
+
     return {
       $id: currentAccount.uid,
       id: currentAccount.uid,
       ...userData,
+      followers,
+      following,
       save: savesList,
       liked: likedList,
       posts: userPostsList,
@@ -795,12 +808,17 @@ export async function getUserById(
     const posts = postsSnap.docs.map(formatPostDoc);
     const data = userDoc.data() || {};
 
+    const followers = Array.isArray(data.followers) ? data.followers : [];
+    const following = Array.isArray(data.following) ? data.following : [];
+
     return {
       $id: userDoc.id,
       id: userDoc.id,
       $createdAt: data.$createdAt || data.createdAt || new Date().toISOString(),
       $updatedAt: data.$updatedAt || data.updatedAt || new Date().toISOString(),
       ...data,
+      followers,
+      following,
       posts,
     };
   } catch (error) {
@@ -865,6 +883,54 @@ export async function updateUser(
     };
   } catch (error) {
     console.error("Error updating user:", error);
+    throw error;
+  }
+}
+
+// ============================== FOLLOW / UNFOLLOW USER
+export async function followUser({
+  currentUserId,
+  targetUserId,
+}: {
+  currentUserId: string;
+  targetUserId: string;
+}) {
+  try {
+    if (!currentUserId || !targetUserId || currentUserId === targetUserId) {
+      return { isFollowing: false };
+    }
+
+    const targetUserRef = doc(db, "users", targetUserId);
+    const currentUserRef = doc(db, "users", currentUserId);
+
+    const targetDoc = await getDoc(targetUserRef);
+    if (!targetDoc.exists()) throw new Error("Target user not found");
+
+    const targetData = targetDoc.data() || {};
+    const followers: string[] = Array.isArray(targetData.followers)
+      ? targetData.followers
+      : [];
+    const isFollowing = followers.includes(currentUserId);
+
+    if (isFollowing) {
+      await updateDoc(targetUserRef, {
+        followers: arrayRemove(currentUserId),
+      });
+      await updateDoc(currentUserRef, {
+        following: arrayRemove(targetUserId),
+      });
+      return { isFollowing: false };
+    } else {
+      await updateDoc(targetUserRef, {
+        followers: arrayUnion(currentUserId),
+      });
+      await updateDoc(currentUserRef, {
+        following: arrayUnion(targetUserId),
+      });
+      return { isFollowing: true };
+    }
+  } catch (error) {
+    console.error("Error toggling follow:", error);
     throw error;
   }
 }

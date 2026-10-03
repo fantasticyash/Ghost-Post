@@ -25,6 +25,7 @@ import {
   searchPosts,
   savePost,
   deleteSavedPost,
+  followUser,
 } from "@/lib/firebase/api";
 import { Models, INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
 
@@ -244,6 +245,30 @@ export const useUpdateUser = () => {
       });
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.GET_USER_BY_ID, data?.$id],
+      });
+    },
+  });
+};
+
+export const useFollowUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      currentUserId,
+      targetUserId,
+    }: {
+      currentUserId: string;
+      targetUserId: string;
+    }) => followUser({ currentUserId, targetUserId }),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.GET_CURRENT_USER],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.GET_USER_BY_ID, variables.targetUserId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: [QUERY_KEYS.GET_USERS],
       });
     },
   });
