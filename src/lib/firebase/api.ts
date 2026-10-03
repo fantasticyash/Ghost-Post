@@ -279,25 +279,94 @@ export async function signOutAccount() {
 }
 
 // ============================================================
-// STORAGE / FILES
+// STORAGE / FILES (Supports Free Tier with Zero External Storage)
 // ============================================================
+
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function compressImageToBase64(
+  file: File,
+  maxWidth = 1000,
+  quality = 0.72
+): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        } else {
+          resolve(e.target?.result as string);
+        }
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve("");
+    reader.readAsDataURL(file);
+  });
+}
 
 export async function uploadFile(file: File) {
   try {
-    const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
-    const fileId = `${Date.now()}_${safeName}`;
-    const storageRef = ref(storage, `uploads/${fileId}`);
-    const uploadResult = await uploadBytes(storageRef, file);
-    const downloadUrl = await getDownloadURL(uploadResult.ref);
+    // If Firebase Storage is configured and accessible, try it
+    if (storage?.app?.options?.storageBucket) {
+      try {
+        const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
+        const fileId = `${Date.now()}_${safeName}`;
+        const storageRef = ref(storage, `uploads/${fileId}`);
+        const uploadResult = await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(uploadResult.ref);
 
+        return {
+          $id: uploadResult.ref.fullPath,
+          name: file.name,
+          url: downloadUrl,
+        };
+      } catch (storageErr) {
+        console.warn(
+          "Firebase Storage unavailable/free tier, using client-side image compression:",
+          storageErr
+        );
+      }
+    }
+
+    // Client-side image compression (works 100% on Firebase free tier without Cloud Storage)
+    const base64Url = await compressImageToBase64(file);
     return {
-      $id: uploadResult.ref.fullPath,
+      $id: `local_${Date.now()}`,
       name: file.name,
-      url: downloadUrl,
+      url: base64Url,
     };
   } catch (error) {
-    console.error("Error uploading file:", error);
-    throw error;
+    console.error("Fallback image encoding:", error);
+    const rawDataUrl = await readFileAsDataURL(file);
+    return {
+      $id: `local_${Date.now()}`,
+      name: file.name,
+      url: rawDataUrl,
+    };
   }
 }
 
@@ -306,17 +375,14 @@ export function getFilePreview(fileId: string) {
 }
 
 export async function deleteFile(fileId: string) {
-  if (!fileId) return { status: "ok" };
+  if (!fileId || fileId.startsWith("local_") || fileId.startsWith("data:")) {
+    return { status: "ok" };
+  }
   try {
-    const storageRef = fileId.startsWith("http")
-      ? ref(storage, fileId)
-      : ref(storage, fileId);
-    await deleteObject(storageRef).catch((e) => {
-      console.warn("File already removed or not found in storage:", e);
-    });
+    const storageRef = ref(storage, fileId);
+    await deleteObject(storageRef).catch(() => {});
     return { status: "ok" };
   } catch (error) {
-    console.warn("Error deleting file:", error);
     return { status: "ok" };
   }
 }
