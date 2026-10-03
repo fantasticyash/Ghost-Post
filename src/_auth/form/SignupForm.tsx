@@ -64,6 +64,7 @@ const SignupForm = () => {
         const session = await signInAccount({
           email: user.email,
           password: user.password,
+          rememberMe: true,
         });
 
         if (session) {

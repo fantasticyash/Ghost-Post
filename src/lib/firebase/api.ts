@@ -4,8 +4,18 @@ import {
   signOut,
   updateProfile,
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   User,
 } from "firebase/auth";
+import {
+  markDeviceAsFamiliar,
+  clearFamiliarDevice,
+  setSessionActive,
+  clearSessionActive,
+} from "@/lib/utils/device";
 import {
   collection,
   doc,
@@ -82,6 +92,8 @@ export async function createUserAccount(user: INewUser) {
       user.password
     );
 
+    markDeviceAsFamiliar(userCredential.user.uid);
+
     const avatarUrl =
       user.imageUrl ||
       `https://ui-avatars.com/api/?name=${encodeURIComponent(
@@ -143,13 +155,31 @@ export async function saveUserToDB(user: {
 }
 
 // ============================== SIGN IN
-export async function signInAccount(user: { email: string; password: string }) {
+export async function signInAccount(user: {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}) {
   try {
+    // Configure persistence according to rememberMe preference
+    if (user.rememberMe) {
+      await setPersistence(auth, browserLocalPersistence);
+    } else {
+      await setPersistence(auth, browserSessionPersistence);
+    }
+
     const userCredential = await signInWithEmailAndPassword(
       auth,
       user.email,
       user.password
     );
+
+    if (user.rememberMe && userCredential?.user) {
+      markDeviceAsFamiliar(userCredential.user.uid);
+    } else {
+      clearFamiliarDevice();
+      setSessionActive();
+    }
 
     return userCredential;
   } catch (error) {
@@ -283,10 +313,23 @@ export async function getCurrentUser(): Promise<Models.Document | null> {
 // ============================== SIGN OUT
 export async function signOutAccount() {
   try {
+    clearFamiliarDevice();
+    clearSessionActive();
     await signOut(auth);
     return true;
   } catch (error) {
     console.error("Error signing out:", error);
+    throw error;
+  }
+}
+
+// ============================== RESET PASSWORD
+export async function resetPassword(email: string) {
+  try {
+    await sendPasswordResetEmail(auth, email);
+    return true;
+  } catch (error: any) {
+    console.error("Error sending password reset email:", error);
     throw error;
   }
 }

@@ -11,6 +11,7 @@ import {
   signInAccount,
   getCurrentUser,
   signOutAccount,
+  resetPassword,
   getUsers,
   createPost,
   getPostById,
@@ -41,7 +42,7 @@ export const useCreateUserAccount = () => {
 
 export const useSignInAccount = () => {
   return useMutation({
-    mutationFn: (user: { email: string; password: string }) =>
+    mutationFn: (user: { email: string; password: string; rememberMe?: boolean }) =>
       signInAccount(user),
   });
 };
@@ -49,6 +50,12 @@ export const useSignInAccount = () => {
 export const useSignOutAccount = () => {
   return useMutation({
     mutationFn: signOutAccount,
+  });
+};
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: (email: string) => resetPassword(email),
   });
 };
 
