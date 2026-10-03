@@ -22,6 +22,7 @@ import {
 } from "@/lib/react-query/queries";
 import { SignupValidation } from "@/lib/validation";
 import { useUserContext } from "@/context/AuthContext";
+import { getFirebaseErrorMessage } from "@/lib/utils";
 
 const SignupForm = () => {
   const { toast } = useToast();
@@ -51,20 +52,6 @@ const SignupForm = () => {
 
       if (!newUser) {
         toast({ title: "Sign up failed. Please try again." });
-
-        return;
-      }
-
-      const session = await signInAccount({
-        email: user.email,
-        password: user.password,
-      });
-
-      if (!session) {
-        toast({ title: "Something went wrong. Please login your new account" });
-
-        navigate("/sign-in");
-
         return;
       }
 
@@ -72,15 +59,26 @@ const SignupForm = () => {
 
       if (isLoggedIn) {
         form.reset();
-
         navigate("/");
       } else {
-        toast({ title: "Login failed. Please try again." });
+        const session = await signInAccount({
+          email: user.email,
+          password: user.password,
+        });
 
-        return;
+        if (session) {
+          await checkAuthUser();
+          form.reset();
+          navigate("/");
+        } else {
+          toast({ title: "Login failed. Please try again." });
+        }
       }
-    } catch (error) {
-      console.log({ error });
+    } catch (error: any) {
+      console.error("Sign up error:", error);
+      toast({
+        title: getFirebaseErrorMessage(error),
+      });
     }
   };
 

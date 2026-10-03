@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useUserContext } from "@/context/AuthContext";
 import { useSignInAccount } from "@/lib/react-query/queries";
 import { SigninValidation } from "@/lib/validation";
+import { getFirebaseErrorMessage } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
@@ -51,9 +52,9 @@ const SigninForm = () => {
       } else {
         toast({ title: "Login failed. Please try again." });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error during sign-in:", error);
-      toast({ title: "An unexpected error occurred. Please try again." });
+      toast({ title: getFirebaseErrorMessage(error) });
     }
   };
 

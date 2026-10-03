@@ -80,3 +80,38 @@ export const multiFormatDateString = (timestamp: string = ""): string => {
 export const checkIsLiked = (likeList: string[], userId: string) => {
   return likeList.includes(userId);
 };
+
+export const getFirebaseErrorMessage = (error: any): string => {
+  const code = error?.code || "";
+  const message = error?.message || "";
+
+  if (code === "auth/operation-not-allowed" || message.includes("operation-not-allowed")) {
+    return "Email/Password sign-in is not enabled in Firebase Console (Go to Authentication > Sign-in method > Email/Password > Enable).";
+  }
+  if (code === "auth/email-already-in-use" || message.includes("email-already-in-use")) {
+    return "This email is already in use. Please sign in instead.";
+  }
+  if (code === "auth/invalid-email" || message.includes("invalid-email")) {
+    return "The email address is invalid.";
+  }
+  if (code === "auth/weak-password" || message.includes("weak-password")) {
+    return "Password is too weak. Please use at least 6 characters.";
+  }
+  if (
+    code === "auth/user-not-found" ||
+    code === "auth/wrong-password" ||
+    code === "auth/invalid-credential" ||
+    message.includes("invalid-credential")
+  ) {
+    return "Invalid email or password.";
+  }
+  if (code === "auth/too-many-requests") {
+    return "Access to this account has been temporarily disabled due to many failed login attempts. Try again later.";
+  }
+  if (code === "permission-denied" || message.includes("PERMISSION_DENIED")) {
+    return "Firestore permission denied. Please check your Firestore Security Rules in Firebase Console.";
+  }
+
+  return message || "An unexpected error occurred. Please try again.";
+};
+
