@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
+  <defs>
+    <!-- Smooth dual-layer white outer glow -->
+    <filter id="ghost-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="glow1" />
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="glow2" />
+      <feMerge>
+        <feMergeNode in="glow2" />
+        <feMergeNode in="glow1" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <radialGradient id="subtle-ambient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.08" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <!-- Dark theme rounded squircle background -->
+  <rect width="128" height="128" rx="28" fill="#09090A" stroke="#1F1F23" stroke-width="1.5" />
+  
+  <!-- Subtle ambient radial lighting behind ghost -->
+  <circle cx="64" cy="64" r="50" fill="url(#subtle-ambient)" />
+
+  <!-- Ghost centered at (64, 64) -->
+  <g transform="translate(64, 64) scale(1.32) translate(-60, -63)">
+    <g filter="url(#ghost-glow)">
+      <!-- Ghost Egg-shaped body -->
+      <path d="M60 90c-12 0-22-12-22-26s10-28 22-28 22 14 22 28-10 26-22 26z" fill="#FFFFFF" stroke="#D1D5DB" stroke-width="1.8" stroke-linejoin="round" />
+      <!-- Left dark pill eye -->
+      <ellipse cx="50" cy="55" rx="4.8" ry="6.8" fill="#1C1C1E" />
+      <!-- Right dark pill eye -->
+      <ellipse cx="70" cy="55" rx="4.8" ry="6.8" fill="#1C1C1E" />
+      <!-- Smiling mouth -->
+      <path d="M57.5 72.5 Q60 76.5 62.5 72.5" stroke="#1C1C1E" stroke-width="2.2" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+</svg>
