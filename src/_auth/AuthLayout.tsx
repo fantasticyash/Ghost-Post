@@ -13,8 +13,8 @@ const AuthLayout = () => {
             <Outlet />
           </section>
           <img
-            src="/assets/images/side-img.svg"
-            alt="logo"
+            src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1964&auto=format&fit=crop"
+            alt="GhostPost visual"
             className="hidden xl:block h-screen w-1/2 object-cover bg-no-repeat"
           />
         </>
