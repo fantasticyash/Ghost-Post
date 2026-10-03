@@ -330,7 +330,47 @@ function compressImageToBase64(
 
 export async function uploadFile(file: File) {
   try {
-    // If Firebase Storage is configured and accessible, try it
+    // 1. Try Cloudinary if configured (25GB Free Tier, CDN)
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+    if (cloudName && uploadPreset) {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
+
+        const response = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            $id: data.public_id || `cloud_${Date.now()}`,
+            name: file.name,
+            url: data.secure_url || data.url,
+          };
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          console.warn(
+            "Cloudinary upload failed, falling back to local compression:",
+            errData
+          );
+        }
+      } catch (cloudErr) {
+        console.warn(
+          "Cloudinary upload network error, falling back to local compression:",
+          cloudErr
+        );
+      }
+    }
+
+    // 2. Try Firebase Storage if configured
     if (storage?.app?.options?.storageBucket) {
       try {
         const safeName = file.name.replace(/[^a-zA-Z0-9.]/g, "_");
@@ -346,13 +386,13 @@ export async function uploadFile(file: File) {
         };
       } catch (storageErr) {
         console.warn(
-          "Firebase Storage unavailable/free tier, using client-side image compression:",
+          "Firebase Storage unavailable, falling back to local compression:",
           storageErr
         );
       }
     }
 
-    // Client-side image compression (works 100% on Firebase free tier without Cloud Storage)
+    // 3. Fallback: Client-side image compression (works 100% free with no storage bucket required)
     const base64Url = await compressImageToBase64(file);
     return {
       $id: `local_${Date.now()}`,
