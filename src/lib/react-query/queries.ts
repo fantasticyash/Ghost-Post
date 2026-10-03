@@ -25,9 +25,8 @@ import {
   searchPosts,
   savePost,
   deleteSavedPost,
-} from "@/lib/appwrite/api";
-import { Models } from "appwrite";
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
+} from "@/lib/firebase/api";
+import { Models, INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
 
 // ============================================================
 // AUTH QUERIES

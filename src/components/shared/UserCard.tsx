@@ -1,4 +1,4 @@
-import { Models } from "appwrite";
+import { Models } from "@/types";
 import { Link } from "react-router-dom";
 
 import { Button } from "../ui/button";

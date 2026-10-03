@@ -1,4 +1,4 @@
-import { Models } from "appwrite";
+import { Models } from "@/types";
 
 import { useGetCurrentUser } from "@/lib/react-query/queries";
 import Loader from "@/components/shared/Loader";

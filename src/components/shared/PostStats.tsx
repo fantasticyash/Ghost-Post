@@ -1,4 +1,4 @@
-import { Models } from "appwrite";
+import { Models } from "@/types";
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 

@@ -56,3 +56,18 @@ export type IContextType = {
   setAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
   checkAuthUser: () => Promise<boolean>;
 };
+
+export namespace Models {
+  export type Document = {
+    $id: string;
+    $createdAt: string;
+    $updatedAt: string;
+    [key: string]: any;
+  };
+
+  export type DocumentList<T = Document> = {
+    total: number;
+    documents: T[];
+  };
+}
+
