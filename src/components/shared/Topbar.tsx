@@ -12,7 +12,7 @@ const Topbar = () => {
 
   useEffect(() => {
     if (isSuccess) navigate(0);
-  }, [isSuccess]);
+  }, [isSuccess, navigate]);
 
   return (
     <section className="topbar">
@@ -22,7 +22,7 @@ const Topbar = () => {
             src="/assets/images/logo.svg"
             alt="logo"
             width={130}
-            height={325}
+            height={32}
           />
         </Link>
 

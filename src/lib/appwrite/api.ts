@@ -159,7 +159,7 @@ export async function createPost(post: INewPost) {
         creator: post.userId,
         caption: post.caption,
         imageUrl: fileUrl,
-        imageID: uploadedFile.$id,
+        imageId: uploadedFile.$id,
         location: post.location,
         tags: tags,
       }
@@ -239,8 +239,12 @@ export async function searchPosts(searchTerm: string) {
   }
 }
 
-export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
-  const queries: any[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
+export async function getInfinitePosts({
+  pageParam,
+}: {
+  pageParam?: string | number;
+}) {
+  const queries: string[] = [Query.orderDesc("$updatedAt"), Query.limit(9)];
 
   if (pageParam) {
     queries.push(Query.cursorAfter(pageParam.toString()));
@@ -464,7 +468,7 @@ export async function getRecentPosts() {
 
 // ============================== GET USERS
 export async function getUsers(limit?: number) {
-  const queries: any[] = [Query.orderDesc("$createdAt")];
+  const queries: string[] = [Query.orderDesc("$createdAt")];
 
   if (limit) {
     queries.push(Query.limit(limit));

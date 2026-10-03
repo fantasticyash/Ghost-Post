@@ -19,7 +19,7 @@ const Home = () => {
         ) : (
           <ul className="grid md:grid-cols-2 grid-cols-1 flex-1 gap-9 w-full items-center justify-center">
             {posts?.documents.map((post: Models.Document) => (
-              <PostCard post={post} key={post.caption} />
+              <PostCard post={post} key={post.$id} />
             ))}
           </ul>
         )}

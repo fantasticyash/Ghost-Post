@@ -1,47 +1,36 @@
-import * as z from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate, useParams } from "react-router-dom";
-
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { useToast } from "@/components/ui/use-toast";
+  Route,
+  Routes,
+  Link,
+  useParams,
+  useLocation,
+} from "react-router-dom";
 
-import { useUserContext } from "@/context/AuthContext";
-import { useGetUserById, useUpdateUser } from "@/lib/react-query/queries";
-import Loader from "@/components/shared/Loader";
-import { ProfileValidation } from "@/lib/validation";
-import ProfileUploader from "@/components/shared/ProfileUploader";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import LikedPosts from "./LikedPosts";
+import { useUserContext } from "@/context/AuthContext";
+import { useGetUserById } from "@/lib/react-query/queries";
+import GridPostList from "@/components/shared/GridPostList";
+import Loader from "@/components/shared/Loader";
 
-const UpdateProfile = () => {
-  const { toast } = useToast();
-  const navigate = useNavigate();
+interface StatBlockProps {
+  value: string | number;
+  label: string;
+}
+
+const StatBlock = ({ value, label }: StatBlockProps) => (
+  <div className="flex-center gap-2">
+    <p className="small-semibold lg:body-bold text-primary-500">{value}</p>
+    <p className="small-medium lg:base-medium text-light-2">{label}</p>
+  </div>
+);
+
+const Profile = () => {
   const { id } = useParams();
-  const { user, setUser } = useUserContext();
-  const form = useForm<z.infer<typeof ProfileValidation>>({
-    resolver: zodResolver(ProfileValidation),
-    defaultValues: {
-      file: [],
-      name: user.name,
-      username: user.username,
-      email: user.email,
-      bio: user.bio || "",
-    },
-  });
+  const { user } = useUserContext();
+  const { pathname } = useLocation();
 
-  // Queries
   const { data: currentUser } = useGetUserById(id || "");
-  const { mutateAsync: updateUser, isPending: isLoadingUpdate } =
-    useUpdateUser();
 
   if (!currentUser)
     return (
@@ -50,158 +39,112 @@ const UpdateProfile = () => {
       </div>
     );
 
-  // Handler
-  const handleUpdate = async (value: z.infer<typeof ProfileValidation>) => {
-    const updatedUser = await updateUser({
-      userId: currentUser.$id,
-      name: value.name,
-      bio: value.bio,
-      file: value.file,
-      imageUrl: currentUser.imageUrl,
-      imageId: currentUser.imageId,
-    });
-
-    if (!updatedUser) {
-      toast({
-        title: `Update user failed. Please try again.`,
-      });
-    }
-
-    setUser({
-      ...user,
-      name: updatedUser?.name,
-      bio: updatedUser?.bio,
-      imageUrl: updatedUser?.imageUrl,
-    });
-    return navigate(`/profile/${id}`);
-  };
+  const isCurrentUser = user.id === currentUser.$id;
 
   return (
-    <div className="flex flex-1">
-      <div className="common-container">
-        <div className="flex-start gap-3 justify-start w-full max-w-5xl">
+    <div className="profile-container">
+      <div className="profile-inner_container">
+        <div className="flex xl:flex-row flex-col max-xl:items-center flex-1 gap-7">
           <img
-            src="/assets/icons/edit.svg"
-            width={36}
-            height={36}
-            alt="edit"
-            className="invert-white"
+            src={
+              currentUser.imageUrl || "/assets/icons/profile-placeholder.svg"
+            }
+            alt="profile"
+            className="w-28 h-28 lg:h-36 lg:w-36 rounded-full object-cover"
           />
-          <h2 className="h3-bold md:h2-bold text-left w-full">Edit Profile</h2>
-        </div>
+          <div className="flex flex-col flex-1 justify-between md:mt-2">
+            <div className="flex flex-col w-full">
+              <h1 className="text-center xl:text-left h3-bold md:h1-semibold w-full">
+                {currentUser.name}
+              </h1>
+              <p className="small-regular md:body-medium text-light-3 text-center xl:text-left">
+                @{currentUser.username}
+              </p>
+            </div>
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleUpdate)}
-            className="flex flex-col gap-7 w-full mt-4 max-w-5xl"
-          >
-            <FormField
-              control={form.control}
-              name="file"
-              render={({ field }) => (
-                <FormItem className="flex">
-                  <FormControl>
-                    <ProfileUploader
-                      fieldChange={field.onChange}
-                      mediaUrl={currentUser.imageUrl}
-                    />
-                  </FormControl>
-                  <FormMessage className="shad-form_message" />
-                </FormItem>
-              )}
-            />
+            <div className="flex gap-8 mt-6 items-center justify-center xl:justify-start flex-wrap z-20">
+              <StatBlock value={currentUser.posts?.length || 0} label="Posts" />
+              <StatBlock value={20} label="Followers" />
+              <StatBlock value={20} label="Following" />
+            </div>
 
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="shad-form_label">Name</FormLabel>
-                  <FormControl>
-                    <Input type="text" className="shad-input" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <p className="small-medium md:base-medium text-center xl:text-left mt-6 max-w-screen-sm">
+              {currentUser.bio}
+            </p>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="shad-form_label">Username</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      className="shad-input"
-                      {...field}
-                      disabled
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="shad-form_label">Email</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      className="shad-input"
-                      {...field}
-                      disabled
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="bio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="shad-form_label">Bio</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      className="shad-textarea custom-scrollbar"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="shad-form_message" />
-                </FormItem>
-              )}
-            />
-
-            <div className="flex gap-4 items-center justify-end">
-              <Button
-                type="button"
-                className="shad-button_dark_4"
-                onClick={() => navigate(-1)}
+          <div className="flex justify-center gap-4">
+            <div className={`${!isCurrentUser && "hidden"}`}>
+              <Link
+                to={`/update-profile/${currentUser.$id}`}
+                className="h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg"
               >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="shad-button_primary whitespace-nowrap"
-                disabled={isLoadingUpdate}
-              >
-                {isLoadingUpdate && <Loader />}
-                Update Profile
+                <img
+                  src="/assets/icons/edit.svg"
+                  alt="edit"
+                  width={20}
+                  height={20}
+                />
+                <p className="flex whitespace-nowrap small-medium">
+                  Edit Profile
+                </p>
+              </Link>
+            </div>
+            <div className={`${isCurrentUser && "hidden"}`}>
+              <Button type="button" className="shad-button_primary px-8">
+                Follow
               </Button>
             </div>
-          </form>
-        </Form>
+          </div>
+        </div>
       </div>
+
+      {currentUser.$id === user.id && (
+        <div className="flex max-w-5xl w-full">
+          <Link
+            to={`/profile/${id}`}
+            className={`profile-tab rounded-l-lg ${
+              pathname === `/profile/${id}` && "!bg-dark-3"
+            }`}
+          >
+            <img
+              src="/assets/icons/posts.svg"
+              alt="posts"
+              width={20}
+              height={20}
+            />
+            Posts
+          </Link>
+          <Link
+            to={`/profile/${id}/liked-posts`}
+            className={`profile-tab rounded-r-lg ${
+              pathname === `/profile/${id}/liked-posts` && "!bg-dark-3"
+            }`}
+          >
+            <img
+              src="/assets/icons/like.svg"
+              alt="like"
+              width={20}
+              height={20}
+            />
+            Liked Posts
+          </Link>
+        </div>
+      )}
+
+      <Routes>
+        <Route
+          index
+          element={
+            <GridPostList posts={currentUser.posts || []} showUser={false} />
+          }
+        />
+        {currentUser.$id === user.id && (
+          <Route path="liked-posts" element={<LikedPosts />} />
+        )}
+      </Routes>
     </div>
   );
 };
 
-export default UpdateProfile;
+export default Profile;

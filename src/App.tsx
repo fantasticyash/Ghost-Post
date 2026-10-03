@@ -2,6 +2,7 @@ import "./globals.css";
 import { Routes, Route } from "react-router-dom";
 import {
   CreatePost,
+  EditPost,
   Explore,
   Home,
   People,
@@ -16,11 +17,7 @@ import AuthLayout from "./_auth/AuthLayout";
 import RootLayout from "./_root/RootLayout";
 import { Toaster } from "@/components/ui/toaster";
 
-/*************  ✨ Codeium Command ⭐  *************/
-/**
- * The main app component, which wraps the entire app in a main tag
-
-/******  2cfee707-192e-4529-8713-85cb3d0cb0e3  *******/ const App = () => {
+const App = () => {
   return (
     <main className="flex h-screen">
       <Routes>
@@ -36,6 +33,7 @@ import { Toaster } from "@/components/ui/toaster";
           <Route path="/saved" element={<Saved />} />
           <Route path="/People" element={<People />} />
           <Route path="/create-post" element={<CreatePost />} />
+          <Route path="/update-post/:id" element={<EditPost />} />
           <Route path="/posts/:id" element={<PostDetails />} />
           <Route path="/profile/:id/*" element={<Profile />} />
           <Route path="/update-profile/:id" element={<UpdateProfile />} />

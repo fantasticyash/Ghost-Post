@@ -1,59 +1,57 @@
-import { useEffect, useState } from "react";
-import Loader from "../../components/shared/Loader";
-import { useGetUsers } from "../../lib/react-query/queries";
+import { useState } from "react";
+import Loader from "@/components/shared/Loader";
+import UserCard from "@/components/shared/UserCard";
+import { useGetUsers } from "@/lib/react-query/queries";
 
 const People = () => {
   const { data: users, isLoading } = useGetUsers();
   const [searchValue, setSearchValue] = useState("");
 
-  useEffect(() => {
-    const debounce = setTimeout(() => {
-      // Implement search functionality here
-    }, 500);
-    return () => clearTimeout(debounce);
-  }, [searchValue]);
+  const filteredUsers = users?.documents.filter(
+    (user) =>
+      user.name?.toLowerCase().includes(searchValue.toLowerCase()) ||
+      user.username?.toLowerCase().includes(searchValue.toLowerCase())
+  );
 
   return (
-    <div className="people-container w-full p-5">
-      <div className="flex justify-center items-center w-full  mt-8 mb-7">
-        <h2 className="flex items-center justify-center  font-extrabold w-full  text-4xl">
-          Find People
-        </h2>
-      </div>
+    <div className="common-container">
+      <div className="user-container">
+        <h2 className="h3-bold md:h2-bold text-left w-full">Find People</h2>
 
-      <div className="flex flex-wrap gap-3 w-full px-5  mb-12 ">
-        <input
-          type="text"
-          placeholder="Search people"
-          className="explore-search w-full p-3 rounded-md"
-          value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
-        />
-      </div>
+        <div className="flex gap-1 px-4 w-full rounded-lg bg-dark-4">
+          <img
+            src="/assets/icons/search.svg"
+            width={24}
+            height={24}
+            alt="search"
+          />
+          <input
+            type="text"
+            placeholder="Search people..."
+            className="explore-search w-full p-3 rounded-md bg-transparent border-none text-light-1 focus:outline-none"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+          />
+        </div>
 
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <ul className="grid-container">
-          {users?.documents.map((user) => (
-            <li key={user.$id} className="user-card">
-              <img
-                src={user.imageUrl || "/assets/icons/profile-placeholder.svg"}
-                alt="creator"
-                className="rounded-full w-14 h-14"
-              />
-              <div className="flex flex-col">
-                <p className="base-medium text-light-1 text-center line-clamp-1">
-                  {user.name}
-                </p>
-                <p className="small-regular text-light-3 text-center line-clamp-1">
-                  @{user.username}
-                </p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+        {isLoading ? (
+          <Loader />
+        ) : (
+          <ul className="user-grid">
+            {filteredUsers && filteredUsers.length > 0 ? (
+              filteredUsers.map((user) => (
+                <li key={user.$id} className="flex-1 min-w-[200px] w-full">
+                  <UserCard user={user} />
+                </li>
+              ))
+            ) : (
+              <p className="text-light-4 mt-10 text-center w-full">
+                No users found
+              </p>
+            )}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

@@ -9,16 +9,14 @@ type ProfileUploaderProps = {
 };
 
 const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
-  const [file, setFile] = useState<File[]>([]);
   const [fileUrl, setFileUrl] = useState<string>(mediaUrl);
 
   const onDrop = useCallback(
     (acceptedFiles: FileWithPath[]) => {
-      setFile(acceptedFiles);
       fieldChange(acceptedFiles);
       setFileUrl(convertFileToUrl(acceptedFiles[0]));
     },
-    [file]
+    [fieldChange]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
@@ -38,7 +36,7 @@ const ProfileUploader = ({ fieldChange, mediaUrl }: ProfileUploaderProps) => {
           alt="image"
           className="h-24 w-24 rounded-full object-cover object-top"
         />
-        <p className="text-primary-500 small-regular md:bbase-semibold">
+        <p className="text-primary-500 small-regular md:base-semibold">
           Change profile photo
         </p>
       </div>
